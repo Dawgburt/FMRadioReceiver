@@ -62,6 +62,47 @@ blocks:
     coordinate: [1232, 336.0]
     rotation: 0
     state: enabled
+- name: epy_block_0
+  id: epy_block
+  parameters:
+    _source_code: "#!/usr/bin/env python3\n# -*- coding: utf-8 -*-\n\"\"\"\n===============================================================================\n\
+      Project Name : FM Radio Receiver - RTL-SDR Blog V3 - WBFM Receive Block\nFile\
+      \ Name    : wbfmrx.py\nAuthor       : Phil Nevins\nEmail        : [p.nevins971@gmail.com]\n\
+      Author       : Arie \nEmail        : [your.email@example.com]\nDate Created\
+      \ : [2025-4-16]\nLast Updated : [YYYY-MM-DD]\nDescription  : WBFM Receive Block\
+      \ Customization\n\nDependencies :\n\n\nUsage :\n    Run this script with:\n\
+      \    $ python3 wbfmrx.py\n\nNotes :\n    [Any additional notes or warnings]\n\
+      \n===============================================================================\n\
+      \"\"\"\n\n# Imports\nimport sys\nimport time\nimport numpy as np\nfrom gnuradio\
+      \ import gr, blocks, analog, audio\n\n\n\nclass blk(gr.sync_block):  # other\
+      \ base classes are basic_block, decim_block, interp_block\n    \"\"\"Embedded\
+      \ Python Block example - a simple multiply const\"\"\"\n\n    def __init__(self,\
+      \ example_param=1.0):  # only default arguments here\n        \"\"\"arguments\
+      \ to this function show up as parameters in GRC\"\"\"\n        gr.sync_block.__init__(\n\
+      \            self,\n            name='Embedded Python Block',   # will show\
+      \ up in GRC\n            in_sig=[np.complex64],\n            out_sig=[np.complex64]\n\
+      \        )\n        # if an attribute with the same name as a parameter is found,\n\
+      \        # a callback is registered (properties work, too).\n        self.example_param\
+      \ = example_param\n\n    def work(self, input_items, output_items):\n      \
+      \  \"\"\"example: multiply with constant\"\"\"\n        output_items[0][:] =\
+      \ input_items[0] * self.example_param\n        return len(output_items[0])\n\
+      \n\n# Rest of code file\n\n\n\n\n"
+    affinity: ''
+    alias: WBFM_RX
+    comment: ''
+    example_param: '1.0'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+  states:
+    _io_cache: ('Embedded Python Block', 'blk', [('example_param', '1.0')], [('0',
+      'complex', 1)], [('0', 'complex', 1)], 'Embedded Python Block example - a simple
+      multiply const', ['example_param'])
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [672, 296.0]
+    rotation: 0
+    state: enabled
 - name: rational_resampler_xxx_0
   id: rational_resampler_xxx
   parameters:
@@ -441,8 +482,9 @@ blocks:
     state: enabled
 
 connections:
+- [epy_block_0, '0', rational_resampler_xxx_0, '0']
 - [rational_resampler_xxx_0, '0', audio_sink_0, '0']
-- [rtlsdr_source_0, '0', rational_resampler_xxx_0, '0']
+- [rtlsdr_source_0, '0', epy_block_0, '0']
 
 metadata:
   file_format: 1
