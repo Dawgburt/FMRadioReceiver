@@ -84,6 +84,11 @@ class radio(gr.top_block, Qt.QWidget):
         self.rtlsdr_source_0.set_bb_gain(20, 0)
         self.rtlsdr_source_0.set_antenna('', 0)
         self.rtlsdr_source_0.set_bandwidth(0, 0)
+        self.rational_resampler_xxx_0 = filter.rational_resampler_fff(
+                interpolation=4,
+                decimation=20,
+                taps=[],
+                fractional_bw=0)
         self.qtgui_freq_sink_x_0 = qtgui.freq_sink_c(
             1024, #size
             window.WIN_BLACKMAN_hARRIS, #wintype
@@ -135,7 +140,7 @@ class radio(gr.top_block, Qt.QWidget):
                 50e3,
                 window.WIN_HAMMING,
                 6.76))
-        self.epy_block_0 = epy_block_0.blk(quad_rate=2400000, audio_rate=48000)
+        self.epy_block_0 = epy_block_0.blk(quad_rate=2.4e6, audio_decim=10)
         self.blocks_multiply_const_vxx_0 = blocks.multiply_const_ff(0.3)
         self.band_pass_filter_0 = filter.fir_filter_fff(
             1,
@@ -155,8 +160,9 @@ class radio(gr.top_block, Qt.QWidget):
         ##################################################
         self.connect((self.band_pass_filter_0, 0), (self.audio_sink_0, 0))
         self.connect((self.blocks_multiply_const_vxx_0, 0), (self.band_pass_filter_0, 0))
-        self.connect((self.epy_block_0, 0), (self.blocks_multiply_const_vxx_0, 0))
+        self.connect((self.epy_block_0, 0), (self.rational_resampler_xxx_0, 0))
         self.connect((self.low_pass_filter_0, 0), (self.epy_block_0, 0))
+        self.connect((self.rational_resampler_xxx_0, 0), (self.blocks_multiply_const_vxx_0, 0))
         self.connect((self.rtlsdr_source_0, 0), (self.low_pass_filter_0, 0))
         self.connect((self.rtlsdr_source_0, 0), (self.qtgui_freq_sink_x_0, 0))
 

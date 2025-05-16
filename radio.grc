@@ -59,7 +59,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [864, 360.0]
+    coordinate: [992, 280.0]
     rotation: 0
     state: enabled
 - name: band_pass_filter_0
@@ -84,8 +84,8 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [856, 164.0]
-    rotation: 180
+    coordinate: [776, 316.0]
+    rotation: 0
     state: enabled
 - name: blocks_multiply_const_vxx_0
   id: blocks_multiply_const_vxx
@@ -102,50 +102,45 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [872, 80.0]
-    rotation: 0
+    coordinate: [784, 248.0]
+    rotation: 180
     state: enabled
 - name: epy_block_0
   id: epy_block
   parameters:
     _source_code: "\"\"\"\nECE-508 Project - FM Radio Receiver - Custom Python Blocks\
-      \ - WBFM\n\nAuthor: Phil Nevins\n\"\"\"\n\nimport numpy as np\nfrom gnuradio\
-      \ import gr\nfrom scipy.signal import firwin, lfilter\n\nclass blk(gr.sync_block):\
-      \  \n    def __init__(self, quad_rate=2400000, audio_rate=48000):  \n      \
-      \  gr.sync_block.__init__(\n            self,\n            name=\"Clean WBFM\
-      \ Demodulator\",\n            in_sig=[np.complex64],\n            out_sig=[np.float32]\n\
-      \        )\n        self.quad_rate = quad_rate\n        self.audio_rate = audio_rate\n\
-      \        self.decim = int(quad_rate // audio_rate)\n\n        # FIR low-pass\
-      \ filter (cutoff just below audio range)\n        self.lpf_taps = firwin(numtaps=101,\
-      \ cutoff=16e3, fs=quad_rate)\n\n        # De-emphasis filter (75us for US)\n\
-      \        tau = 75e-6\n        self.alpha = np.exp(-1.0 / (audio_rate * tau))\n\
-      \        self.prev_y = 0.0\n\n    def work(self, input_items, output_items):\n\
-      \        in0 = input_items[0]\n        out = output_items[0]\n\n        # FM\
-      \ demod via conjugate product\n        phasor_diff = in0[1:] * np.conj(in0[:-1])\n\
-      \        demod = np.angle(phasor_diff)\n        demod = np.insert(demod, 0,\
-      \ 0)\n\n        # FIR LPF before decimation to prevent aliasing\n        filtered_baseband\
-      \ = lfilter(self.lpf_taps, 1.0, demod)\n\n        # Decimate safely\n      \
-      \  decimated = filtered_baseband[::self.decim]\n\n        # De-emphasis filter\n\
-      \        filtered = np.zeros_like(decimated)\n        for i in range(len(decimated)):\n\
-      \            self.prev_y = (1 - self.alpha) * decimated[i] + self.alpha * self.prev_y\n\
-      \            filtered[i] = self.prev_y\n\n        # Remove residual DC\n   \
-      \     filtered -= np.mean(filtered)\n\n        # Scale gain to avoid clipping\n\
-      \        filtered *= 0.2\n\n        out[:len(filtered)] = filtered.astype(np.float32)\n\
-      \        return len(filtered)\n\n"
+      \ - WBFM\n\nAuthor: Phil Nevins, Arie J\n\"\"\"\n\nimport numpy as np\nfrom\
+      \ gnuradio import gr\n\nclass blk(gr.sync_block):\n    \"\"\"Clean WBFM demodulator:\
+      \ matches built-in GNU Radio WBFM Receive\"\"\"\n\n    def __init__(self, quad_rate=2.4e6,\
+      \ audio_decim=10):\n        gr.sync_block.__init__(\n            self,\n   \
+      \         name=\"WBFM Receive Custom\",\n            in_sig=[np.complex64],\n\
+      \            out_sig=[np.float32],\n        )\n        self.quad_rate = quad_rate\n\
+      \        self.audio_decim = int(audio_decim)\n        self.prev_sample = 0j\n\
+      \n    def work(self, input_items, output_items):\n        x = input_items[0]\n\
+      \        out = output_items[0]\n\n        n_out = len(out)\n        n_in = n_out\
+      \ * self.audio_decim\n\n        if len(x) < n_in:\n            return 0\n\n\
+      \        x = x[:n_in]\n\n        # FM demodulation using conjugate product\n\
+      \        mixed = x * np.conj(np.roll(x, 1))\n        mixed[0] = x[0] * np.conj(self.prev_sample)\n\
+      \        self.prev_sample = x[-1]\n\n        demod = np.angle(mixed)\n\n   \
+      \     # Decimate\n        audio = demod[::self.audio_decim]\n\n        # Don't\
+      \ normalize or clip; let rest of flow do it\n        out[:n_out] = audio[:n_out]\n\
+      \n        return n_out\n\n"
     affinity: ''
     alias: ''
-    audio_rate: '48000'
+    audio_decim: '10'
     comment: ''
     maxoutbuf: '0'
     minoutbuf: '0'
-    quad_rate: '2400000'
+    quad_rate: '2400000.0'
   states:
-    _io_cache: ('Clean WBFM Demodulator', 'blk', [('quad_rate', '2400000'), ('audio_rate',
-      '48000')], [('0', 'complex', 1)], [('0', 'float', 1)], '', ['audio_rate', 'quad_rate'])
+    _io_cache: '(''WBFM Receive Custom'', ''blk'', [(''quad_rate'', ''2400000.0''),
+      (''audio_decim'', ''10'')], [(''0'', ''complex'', 1)], [(''0'', ''float'', 1)],
+      ''Clean WBFM demodulator: matches built-in GNU Radio WBFM Receive'', [''audio_decim'',
+      ''quad_rate''])'
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [624, 128.0]
+    coordinate: [576, 184.0]
     rotation: 0
     state: enabled
 - name: low_pass_filter_0
@@ -169,7 +164,7 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [416, 84.0]
+    coordinate: [376, 84.0]
     rotation: 0
     state: enabled
 - name: qtgui_freq_sink_x_0
@@ -250,7 +245,27 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [480, 352.0]
+    coordinate: [376, 328.0]
+    rotation: 0
+    state: enabled
+- name: rational_resampler_xxx_0
+  id: rational_resampler_xxx
+  parameters:
+    affinity: ''
+    alias: ''
+    comment: ''
+    decim: '20'
+    fbw: '0'
+    interp: '4'
+    maxoutbuf: '0'
+    minoutbuf: '0'
+    taps: '[]'
+    type: fff
+  states:
+    bus_sink: false
+    bus_source: false
+    bus_structure: null
+    coordinate: [776, 120.0]
     rotation: 0
     state: enabled
 - name: rtlsdr_source_0
@@ -607,15 +622,16 @@ blocks:
     bus_sink: false
     bus_source: false
     bus_structure: null
-    coordinate: [120, 156.0]
+    coordinate: [96, 180.0]
     rotation: 0
     state: enabled
 
 connections:
 - [band_pass_filter_0, '0', audio_sink_0, '0']
 - [blocks_multiply_const_vxx_0, '0', band_pass_filter_0, '0']
-- [epy_block_0, '0', blocks_multiply_const_vxx_0, '0']
+- [epy_block_0, '0', rational_resampler_xxx_0, '0']
 - [low_pass_filter_0, '0', epy_block_0, '0']
+- [rational_resampler_xxx_0, '0', blocks_multiply_const_vxx_0, '0']
 - [rtlsdr_source_0, '0', low_pass_filter_0, '0']
 - [rtlsdr_source_0, '0', qtgui_freq_sink_x_0, '0']
 
